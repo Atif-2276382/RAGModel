@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Pipeline - Amazon Sustainability Report</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif;
+    background: #f5f7fb; color: #172033;
+  }
+  .wrap { max-width: 1200px; margin: auto; padding: 32px 22px 50px; }
+  h1 { margin: 0 0 8px; font-size: 30px; }
+  .subtitle { color: #64748b; margin-bottom: 28px; }
+  .section-title {
+    margin: 28px 0 14px; font-size: 18px; font-weight: 700;
+  }
+  .flow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  .arrow { font-size: 24px; color: #94a3b8; }
+  .card {
+    width: 150px; min-height: 105px; background: white;
+    border: 1px solid #dbe2ea; border-radius: 14px; padding: 15px;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(20,30,50,.06);
+    transition: .18s;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(20,30,50,.12); }
+  .num { font-size: 12px; color: #64748b; font-weight: 700; }
+  .name { font-size: 16px; font-weight: 750; margin: 7px 0 4px; }
+  .tech { font-size: 12px; color: #64748b; }
+  .detail {
+    display: none; background: white; border: 1px solid #dbe2ea;
+    border-radius: 16px; margin-top: 18px; padding: 22px;
+  }
+  .detail.active { display: block; }
+  .detail h2 { margin-top: 0; }
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .box { background: #f8fafc; border-radius: 12px; padding: 15px; }
+  .box b { display: block; margin-bottom: 7px; }
+  code {
+    background: #eef2f7; padding: 2px 6px; border-radius: 5px;
+    font-family: Consolas, monospace;
+  }
+  .query {
+    margin-top: 25px; background: #172033; color: white;
+    border-radius: 16px; padding: 20px;
+  }
+  .query-flow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+    margin-top: 14px;
+  }
+  .pill { background: #26344f; padding: 10px 13px; border-radius: 10px; }
+  .legend { margin-top: 25px; color: #64748b; font-size: 13px; }
+  @media(max-width:800px) {
+    .cols { grid-template-columns: 1fr; }
+    .arrow { display:none; }
+    .card { width: calc(50% - 5px); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Interactive RAG Pipeline</h1>
+  <div class="subtitle">Our implementation: Amazon 2023 Sustainability Report → local RAG → Llama 3.2</div>
+
+  <div class="section-title">① Indexing / Ingestion Pipeline</div>
+  <div class="flow">
+    <div class="card" onclick="show(1)"><div class="num">01</div><div class="name">PDF</div><div class="tech">Amazon report</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(2)"><div class="num">02</div><div class="name">Extract Text</div><div class="tech">pypdf</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(3)"><div class="num">03</div><div class="name">Chunking</div><div class="tech">1000 / 200</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(4)"><div class="num">04</div><div class="name">Embeddings</div><div class="tech">MiniLM · 384D</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(5)"><div class="num">05</div><div class="name">Storage</div><div class="tech">JSON</div></div>
+  </div>
+
+  <div class="section-title">② Query / Retrieval / Generation Pipeline</div>
+  <div class="flow">
+    <div class="card" onclick="show(6)"><div class="num">06</div><div class="name">Question</div><div class="tech">User query</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(7)"><div class="num">07</div><div class="name">Query Embedding</div><div class="tech">MiniLM · 384D</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(8)"><div class="num">08</div><div class="name">Similarity Search</div><div class="tech">Cosine similarity</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(9)"><div class="num">09</div><div class="name">Top-K Context</div><div class="tech">Top 5 chunks</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(10)"><div class="num">10</div><div class="name">Llama 3.2</div><div class="tech">Ollama</div></div>
+    <div class="arrow">→</div>
+    <div class="card" onclick="show(11)"><div class="num">11</div><div class="name">Answer</div><div class="tech">Grounded response</div></div>
+  </div>
+
+  <div id="details"></div>
+
+  <div class="query">
+    <b>Example from our project</b>
+    <div style="margin-top:8px;">“What are Amazon's goals related to carbon-free energy?”</div>
+    <div class="query-flow">
+      <span class="pill">Question embedding</span><span>→</span>
+      <span class="pill">563 chunks compared</span><span>→</span>
+      <span class="pill">Top 5 retrieved</span><span>→</span>
+      <span class="pill">Context + question</span><span>→</span>
+      <span class="pill">Llama 3.2</span>
+    </div>
+  </div>
+
+  <div class="legend">Click any stage above to inspect its role, input/output, and implementation detail.</div>
+</div>
+
+<script>
+const data = {
+1:["PDF","Source document","Amazon 2023 Sustainability Report","amazon2023.pdf"],
+2:["Extract Text","PDF → text","98 pages → 450,064 characters","src/extract_text.py · pypdf"],
+3:["Chunking","Text → chunks","563 chunks · 1,000 chars · 200 overlap","src/chunk_text.py"],
+4:["Embeddings","Chunks → vectors","all-MiniLM-L6-v2 · 384 dimensions","src/embed_chunks.py"],
+5:["Storage","Vectors + text","563 records stored in JSON","amazon2023_embeddings.json"],
+6:["Question","User input","Example: carbon-free energy goals?","input() in retrieval script"],
+7:["Query Embedding","Question → vector","384-dimensional query vector","model.encode(question)"],
+8:["Similarity Search","Query vector vs chunk vectors","Cosine similarity across 563 chunks","NumPy dot / norm"],
+9:["Top-K Context","Ranked evidence","Top 5 chunks selected and combined","build_context / generate_answer_ollama"],
+10:["Generation","Context + question → answer","Llama 3.2 running locally via Ollama","ollama.chat(...)"],
+11:["Answer","Final response","Grounded answer based on retrieved context","response['message']['content']"]
+};
+function show(n){
+ const d=data[n];
+ document.getElementById("details").innerHTML =
+ `<div class="detail active"><h2>${d[0]}</h2>
+ <div class="cols">
+ <div class="box"><b>Purpose</b>${d[1]}</div>
+ <div class="box"><b>What happened</b>${d[2]}</div>
+ <div class="box"><b>Implementation</b><code>${d[3]}</code></div>
+ </div></div>`;
+ document.getElementById("details").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+show(1);
+</script>
+</body>
+</html>
